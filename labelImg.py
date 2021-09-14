@@ -53,6 +53,24 @@ from libs.hashableQListWidgetItem import HashableQListWidgetItem
 
 __appname__ = 'labelImg'
 
+# 21.09.14 sort shapes by box size (big >> small)
+def sort_shapes_by_box_size(shapes):
+    new_shapes = []
+    box_area_list = []
+    for i, element in enumerate(shapes):
+        x1, y1, x3, y3 = element[1][0][0], element[1][0][1], element[1][2][0], element[1][2][1]
+        width, height = x3 - x1, y3 - y1
+        area = width * height
+        box_area_list.append((i, area))
+        # print("\t{}".format((i, area)))
+    box_area_list.sort(key=lambda x: x[1], reverse=True)
+    # print("---"*30)
+    # for box in box_area_list:
+    #     print("\t{}".format(box))
+    new_shapes = list(0 for i in range(0,len(shapes)))
+    for i in range(0,len(shapes)):
+        new_shapes[i] = shapes[box_area_list[i][0]]
+    return new_shapes
 
 class WindowMixin(object):
 
@@ -167,6 +185,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dock.setWidget(label_list_container)
 
         self.file_list_widget = QListWidget()
+        self.file_list_widget.alternatingRowColor = 1 
         self.file_list_widget.itemDoubleClicked.connect(self.file_item_double_clicked)
         file_list_layout = QVBoxLayout()
         file_list_layout.setContentsMargins(0, 0, 0, 0)
@@ -1556,6 +1575,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.set_format(FORMAT_YOLO)
         t_yolo_parse_reader = YoloReader(txt_path, self.image)
         shapes = t_yolo_parse_reader.get_shapes()
+        shapes = sort_shapes_by_box_size(shapes)
         print(shapes)
         self.load_labels(shapes)
         self.canvas.verified = t_yolo_parse_reader.verified
